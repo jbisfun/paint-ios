@@ -10,7 +10,7 @@ struct MainView: View {
     @Environment(Router.self) private var router
     @Environment(Config.self) private var config
     @Environment(\.palette) private var palette
-    @Environment(\.closeApp) private var closeApp
+    @Environment(\.finishApp) private var finishApp
 
     @State private var canvas = PaintCanvas()
     @State private var isEyeDropperOn = false
@@ -41,6 +41,12 @@ struct MainView: View {
     private var contrast: Color { canvas.backgroundColor.contrastColor }
 
     var body: some View {
+        mainContent
+            // The launcher's navigation bar Back on the main screen (onBackPressedCompat).
+            .onBackPressed { close() }
+    }
+
+    private var mainContent: some View {
         VStack(spacing: 0) {
             topBar
             ZStack {
@@ -86,7 +92,7 @@ struct MainView: View {
             case .success:
                 savedPathsHash = canvas.getDrawingHashCode()
                 router.toast = "File saved successfully"
-                if closeAfterSaving { closeApp?() }
+                if closeAfterSaving { finishApp?() }
             case .failure(let error):
                 router.toast = error.localizedDescription
             }
@@ -103,7 +109,7 @@ struct MainView: View {
                 closeAfterSaving = true
                 trySaveImage()
             }
-            Button("Discard", role: .destructive) { closeApp?() }
+            Button("Discard", role: .destructive) { finishApp?() }
         }
         .confirmationDialog("Open file", isPresented: $chooseOpenSource) {
             Button("Photos") { pickingPhoto = true }
@@ -130,9 +136,6 @@ struct MainView: View {
 
     private var topBar: some View {
         HStack(spacing: 0) {
-            if closeApp != nil {
-                IconButton(icon: "square.grid.2x2") { close() }
-            }
             Spacer()
             IconButton(icon: "square.and.arrow.down") { trySaveImage() }
             IconButton(icon: "trash") { displayClearCanvasPrompt() }
@@ -276,7 +279,7 @@ struct MainView: View {
             lastSavePromptTS = Date()
             savePrompt = true
         } else {
-            closeApp?()
+            finishApp?()
         }
     }
 
